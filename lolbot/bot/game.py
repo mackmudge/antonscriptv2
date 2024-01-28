@@ -89,7 +89,7 @@ class Game:
             sleep(30)
             return False
         except (utils.WindowNotFound, pyautogui.FailSafeException):
-            self.log.info("Game Complete. Game Time: {}".format(self.formatted_game_time))
+            self.log.info(f"Game Complete. Game Time: {self.formatted_game_time}")
             return True
 
     def wait_for_game_window(self) -> None:
@@ -184,7 +184,7 @@ class Game:
         self.upgrade_abilities()
         self.update_state()
         if self.respawn_in is not None and self.respawn_in > 0:
-            self.log.debug("Dead, waiting for {} seconds", format(self.respawn_in))
+            self.log.debug(f"Dead, waiting for {self.respawn_in} seconds")
             sleep(self.respawn_in + .3)
             self.update_state()
         self.respawn_in = None
@@ -217,14 +217,14 @@ class Game:
 
     def upgrade_abilities(self) -> None:
         """Upgrades abilities and then rotates which ability will be upgraded first next time"""
-        self.log.debug("Upgrading abilities. Second Ability: {}".format(self.ability_upgrades[1]))
+        self.log.debug(f"Upgrading abilities. Second Ability: {self.ability_upgrades[1]}")
         for upgrade in self.ability_upgrades:
             utils.press(upgrade, utils.LEAGUE_GAME_CLIENT_WINNAME)
         self.ability_upgrades = ([self.ability_upgrades[0]] + [self.ability_upgrades[-1]] + self.ability_upgrades[1:-1])  # r is always first
 
     def update_state(self, postpone_update=1.0) -> bool:
         """Gets game data from local game server and updates game state"""
-        self.log.debug("Updating state. Caller: {}".format(inspect.stack()[1][3]))
+        self.log.debug(f"Updating state. Caller: {inspect.stack()[1][3]}")
         sleep(postpone_update)
         try:
             response = requests.get('https://127.0.0.1:2999/liveclientdata/allgamedata', timeout=10, verify=False)
@@ -237,7 +237,7 @@ class Game:
                 raise GameError("Connection Error. Could not connect to game")
             return False
         if response.status_code != 200:
-            self.log.debug("Connection error. Response status code: {}".format(response.status_code))
+            self.log.debug(f"Connection error. Response status code: {response.status_code}")
             self.connection_errors += 1
             if not utils.exists(utils.LEAGUE_GAME_CLIENT_WINNAME):
                 raise utils.WindowNotFound
@@ -269,14 +269,14 @@ class Game:
             self.game_state = GameState.PRE_MINIONS
         elif not self.mid_turret_destroyed:
             if self.game_state != GameState.EARLY_GAME:
-                self.log.info("Early Game. Pushing center mid. Game Time: {}".format(self.formatted_game_time))
+                self.log.info(f"Early Game. Pushing center mid. Game Time: {self.formatted_game_time}")
                 self.game_state = GameState.EARLY_GAME
         elif self.game_time < Game.MAX_GAME_TIME or self.mid_turret_destroyed:
             if self.game_state != GameState.LATE_GAME:
-                self.log.info("Mid Game. Pushing enemy nexus. Game Time: {}".format(self.formatted_game_time))
+                self.log.info(f"Mid Game. Pushing enemy nexus. Game Time: {self.formatted_game_time}")
                 self.game_state = GameState.LATE_GAME
         else:
             raise GameError("Game has exceeded the max time limit")
         self.connection_errors = 0
-        self.log.debug("State Updated. Game Time: {}, Game State: {}, IsDead: {}".format(self.game_time, self.game_state, self.is_dead))
+        self.log.debug(f"State Updated. Game Time: {self.game_time}, Game State: {self.game_state}, IsDead: {self.is_dead}")
         return True

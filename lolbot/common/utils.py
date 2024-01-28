@@ -117,7 +117,7 @@ def exists(window_title: str) -> bool:
 def click(ratio: tuple, expected_window_name: str = '', wait: int or float = 1) -> None:
     """Makes a click in an open window"""
     if expected_window_name != '' and not exists(expected_window_name):
-        log.debug("Cannot click on {}, {} does not exist".format(ratio, expected_window_name))
+        log.debug(f"Cannot click on {ratio}, {expected_window_name} does not exist")
         raise WindowNotFound
     elif expected_window_name != '':
         window_name = expected_window_name
@@ -127,9 +127,9 @@ def click(ratio: tuple, expected_window_name: str = '', wait: int or float = 1) 
         elif exists(LEAGUE_CLIENT_WINNAME):
             window_name = LEAGUE_CLIENT_WINNAME
         else:
-            log.debug("Cannot click on {}, no available window".format(ratio))
+            log.debug(f"Cannot click on {ratio}, no available window")
             return
-    log.debug('Clicking on ratio {}: {}, {}. Waiting: {}'.format(ratio, ratio[0], ratio[1], wait))
+    log.debug(f"Clicking on ratio {ratio}: {ratio[0]}, {ratio[1]}. Waiting: {wait}")
     x, y, l, h = size(window_name)
     updated_x = ((l - x) * ratio[0]) + x
     updated_y = ((h - y) * ratio[1]) + y
@@ -142,7 +142,7 @@ def click(ratio: tuple, expected_window_name: str = '', wait: int or float = 1) 
 def right_click(ratio: tuple, expected_window: str = '', wait: int or float = 1) -> None:
     """Makes a right click in an open window"""
     if expected_window != '' and not exists(expected_window):
-        log.debug("Cannot click on {}, {} does not exist".format(ratio, expected_window))
+        log.debug(f"Cannot click on {ratio}, {expected_window} does not exist")
         raise WindowNotFound
     elif expected_window != '':
         window_name = expected_window
@@ -152,9 +152,9 @@ def right_click(ratio: tuple, expected_window: str = '', wait: int or float = 1)
         elif exists(LEAGUE_CLIENT_WINNAME):
             window_name = LEAGUE_CLIENT_WINNAME
         else:
-            log.debug("Cannot click on {}, no available window".format(ratio))
+            log.debug(f"Cannot click on {ratio}, no available window")
             return
-    log.debug('Clicking on ratio {}: {}, {}. Waiting: {}'.format(ratio, ratio[0], ratio[1], wait))
+    log.debug(f"Clicking on ratio {ratio}: {ratio[0]}, {ratio[1]}. Waiting: {wait}")
     x, y, l, h = size(window_name)
     updated_x = ((l - x) * ratio[0]) + x
     updated_y = ((h - y) * ratio[1]) + y
@@ -169,7 +169,7 @@ def attack_move_click(ratio: tuple, wait: int or float = 1) -> None:
     if not exists(LEAGUE_GAME_CLIENT_WINNAME):
         log.debug("Cannot attack move when game is not running")
         raise WindowNotFound
-    log.debug('Attack Moving on ratio {}: {}, {}. Waiting: {}'.format(ratio, ratio[0], ratio[1], wait))
+    log.debug(f"Attack Moving on ratio {ratio}: {ratio[0]}, {ratio[1]}. Waiting: {wait}")
     x, y, l, h = size(LEAGUE_GAME_CLIENT_WINNAME)
     updated_x = ((l - x) * ratio[0]) + x
     updated_y = ((h - y) * ratio[1]) + y
@@ -187,9 +187,9 @@ def attack_move_click(ratio: tuple, wait: int or float = 1) -> None:
 def press(key: str, expected_window: str = '', wait: int or float = 1) -> None:
     """Sends a keypress to a window"""
     if expected_window != '' and not exists(expected_window):
-        log.debug("Cannot press {}, {} does not exist".format(key, expected_window))
+        log.debug(f"Cannot press {key}, {expected_window} does not exist")
         raise WindowNotFound
-    log.debug("Pressing key: {}. Waiting: {}".format(key, wait))
+    log.debug(f"Pressing key: {key}. Waiting: {wait}")
     keyboard.press_and_release(key)
     sleep(wait)
 
@@ -197,9 +197,9 @@ def press(key: str, expected_window: str = '', wait: int or float = 1) -> None:
 def write(keys: str, expected_window: str = '', wait: int or float = 1) -> None:
     """Sends a string of key presses to a window"""
     if expected_window != '' and not exists(expected_window):
-        log.debug("Cannot type {}, {} does not exist".format(keys, expected_window))
+        log.debug(f"Cannot type {keys}, {expected_window} does not exist")
         raise WindowNotFound
-    log.debug("Typewriting {}. Waiting: {}".format(keys, wait))
+    log.debug(f"Typewriting {keys}. Waiting: {wait}")
     pyautogui.typewrite(keys)
     sleep(wait)
 

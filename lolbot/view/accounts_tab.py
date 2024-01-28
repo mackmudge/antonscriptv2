@@ -39,7 +39,7 @@ class AccountsTab:
                     dpg.add_button(label="Cancel", width=113, callback=lambda: dpg.configure_item("AccountSubmit", show=False))
             with dpg.group(horizontal=True):
                 dpg.add_button(label="Add New Account", width=184, callback=lambda: dpg.configure_item("AccountSubmit", show=True))
-                dpg.add_button(label="Show in File Explorer", width=184, callback=lambda: subprocess.Popen('explorer /select, {}'.format(Constants.ACCOUNT_PATH)))
+                dpg.add_button(label="Show in File Explorer", width=184, callback=lambda: subprocess.Popen(f"explorer /select, {Constants.ACCOUNT_PATH}"))
                 dpg.add_button(tag="BackupButton", label="Create Backup", width=184, callback=self.create_backup)
                 with dpg.tooltip(dpg.last_item()):
                     dpg.add_text("Creates a backup of the accounts.json file in the bak folder")
@@ -107,7 +107,7 @@ class AccountsTab:
 
     def delete_account_dialog(self, sender, app_data, user_data: Any) -> None:
         with dpg.window(label="Delete Account", modal=True, show=True, tag="DeleteAccount", pos=[125, 130], on_close=lambda: dpg.delete_item("DeleteAccount")):
-            dpg.add_text("Account: {} will be deleted".format(user_data['username']))
+            dpg.add_text(f"Account: {user_data['username']} will be deleted")
             dpg.add_separator()
             dpg.add_spacer()
             dpg.add_spacer()
@@ -118,8 +118,8 @@ class AccountsTab:
 
     @staticmethod
     def create_backup(sender: int) -> None:
-        bak = "{}{}".format(time.strftime("%Y%m%d-%H%M%S"), ".json")
-        shutil.copyfile(Constants.ACCOUNT_PATH, '{}/{}'.format(Constants.BAK_DIR, bak))
+        bak = f"{time.strftime('%Y%m%d-%H%M%S')}.json"
+        shutil.copyfile(Constants.ACCOUNT_PATH, f"{Constants.BAK_DIR}/{bak}")
         dpg.configure_item("BackupButton", label="Backup Created!")
         threading.Timer(1, lambda: dpg.configure_item("BackupButton", label="Create Backup")).start()
 

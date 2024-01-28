@@ -120,8 +120,7 @@ class BotTab:
                 r = self.connection.request('get', '/lol-summoner/v1/current-summoner')
                 if r.status_code == 200:
                     _account = r.json()['displayName']
-                    level = str(r.json()['summonerLevel']) + " - " + str(
-                        r.json()['percentCompleteForNextLevel']) + "% to next level"
+                    level = f"{r.json()['summonerLevel']} - {r.json()['percentCompleteForNextLevel']} % to next level"
                 r = self.connection.request('get', '/lol-gameflow/v1/gameflow-phase')
                 if r.status_code == 200:
                     phase = r.json()
@@ -144,7 +143,7 @@ class BotTab:
                     response = requests.get('https://127.0.0.1:2999/liveclientdata/allgamedata', timeout=10, verify=False)
                     if response.status_code == 200:
                         for player in response.json()['allPlayers']:
-                            if player['summonerName'] == response.json()['activePlayer']['summonerName']:
+                            if player['summonerName'] in response.json()['activePlayer']['summonerName']:
                                 champ = player['championName']
                         game_time = utils.seconds_to_min_sec(response.json()['gameData']['gameTime'])
                 except:
@@ -152,21 +151,21 @@ class BotTab:
                         self.connection.set_lcu_headers()
                     except:
                         pass
-                msg = "Accnt: {}\n".format(_account)
-                msg = msg + "Phase: {}\n".format(phase)
-                msg = msg + "Time : {}\n".format(game_time)
-                msg = msg + "Champ: {}\n".format(champ)
-                msg = msg + "Level: {}".format(level)
+                msg = f"Accnt: {_account}\n"
+                msg = msg + f"Phase: {phase}\n"
+                msg = msg + f"Time: {game_time}\n"
+                msg = msg + f"Champ: {champ}\n"
+                msg = msg + f"Level: {level}"
             else:
                 try:
                     r = requests.get('http://ddragon.leagueoflegends.com/api/versions.json')
                     league_patch = r.json()[0]
                 except:
                     pass
-                msg = "Accnt: {}\n".format(_account)
-                msg = msg + "Phase: {}\n".format(phase)
-                msg = msg + "Patch: {}\n".format(league_patch)
-                msg = msg + "Level: {}".format(level)
+                msg = f"Accnt: {_account}\n"
+                msg = msg + f"Phase: {phase}\n"
+                msg = msg + f"Patch: {league_patch}\n"
+                msg = msg + f"Level: {level}"
             if not self.terminate.is_set():
                 dpg.configure_item("Info", default_value=msg)
 

@@ -95,7 +95,7 @@ class MainWindow:
                     display_message = ""
                     break
                 elif "INFO" not in msg and "ERROR" not in msg and "WARNING" not in msg:
-                    display_message += "[{}] [INFO   ] {}\n".format(datetime.datetime.now().strftime("%H:%M:%S"), msg)
+                    display_message += f"[{datetime.datetime.now().strftime('%H:%M:%S')}] [INFO   ] {msg}\n"
                 else:
                     display_message += msg + "\n"
             dpg.configure_item("Output", default_value=display_message.strip())

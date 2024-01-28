@@ -29,7 +29,7 @@ class AboutTab:
                 dpg.add_button(label='Bot Version', width=100, enabled=False)
                 dpg.add_text(default_value=self.version)
                 if self.need_update:
-                    update = dpg.add_button(label="- Update Available ({})".format(self.latest_version), callback=lambda: webbrowser.open('https://github.com/iholston/lol-bot/releases/latest'))
+                    update = dpg.add_button(label=f"- Update Available ({self.latest_version})", callback=lambda: webbrowser.open('https://github.com/iholston/lol-bot/releases/latest'))
                     with dpg.tooltip(dpg.last_item()):
                         dpg.add_text("Get latest release")
                     dpg.bind_item_theme(update, "__hyperlinkTheme")

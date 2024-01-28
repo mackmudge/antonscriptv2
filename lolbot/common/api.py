@@ -43,20 +43,14 @@ class Connection:
         self.client_username = Connection.RCU_USERNAME
 
         # lockfile
-        lockfile = open(config.Constants.RIOT_LOCKFILE, 'r')
-        data = lockfile.read()
-        self.log.debug(data)
-        lockfile.close()
-        data = data.split(':')
-        self.procname = data[0]
-        self.pid = data[1]
-        self.port = data[2]
-        self.client_password = data[3]
-        self.protocol = data[4]
+        with open(config.Constants.RIOT_LOCKFILE, 'r') as lockfile:
+            data = lockfile.read().split(':')
+            self.log.debug(data)
+        self.procname, self.pid, self.port, self.client_password, self.protocol = data
 
         # headers
-        userpass = b64encode(bytes('{}:{}'.format(self.client_username, self.client_password), 'utf-8')).decode('ascii')
-        self.headers = {'Authorization': 'Basic {}'.format(userpass), "Content-Type": "application/json"}
+        userpass = b64encode(bytes(f'{self.client_username}:{self.client_password}', 'utf-8')).decode('ascii')
+        self.headers = {'Authorization': f'Basic {userpass}', "Content-Type": "application/json"}
         self.log.debug(self.headers['Authorization'])
 
     def set_lcu_headers(self, verbose: bool = True) -> None:
@@ -65,20 +59,14 @@ class Connection:
         self.client_username = Connection.LCU_USERNAME
 
         # lockfile
-        lockfile = open(self.config.get_data('league_lockfile'), 'r')
-        data = lockfile.read()
-        self.log.debug(data)
-        lockfile.close()
-        data = data.split(':')
-        self.procname = data[0]
-        self.pid = data[1]
-        self.port = data[2]
-        self.client_password = data[3]
-        self.protocol = data[4]
+        with open(self.config.get_data('league_lockfile'), 'r') as lockfile:
+            data = lockfile.read().split(':')
+            self.log.debug(data)
+        self.procname, self.pid, self.port, self.client_password, self.protocol = data
 
         # headers
-        userpass = b64encode(bytes('{}:{}'.format(self.client_username, self.client_password), 'utf-8')).decode('ascii')
-        self.headers = {'Authorization': 'Basic {}'.format(userpass)}
+        userpass = b64encode(bytes(f'{self.client_username}:{self.client_password}', 'utf-8')).decode('ascii')
+        self.headers = {'Authorization': f'Basic {userpass}'}
         self.log.debug(self.headers['Authorization'])
 
     def connect_lcu(self, verbose: bool = True) -> None:
@@ -91,20 +79,14 @@ class Connection:
         self.client_username = Connection.LCU_USERNAME
 
         # lockfile
-        lockfile = open(self.config.get_data('league_lockfile'), 'r')
-        data = lockfile.read()
-        self.log.debug(data)
-        lockfile.close()
-        data = data.split(':')
-        self.procname = data[0]
-        self.pid = data[1]
-        self.port = data[2]
-        self.client_password = data[3]
-        self.protocol = data[4]
+        with open(self.config.get_data('league_lockfile'), 'r') as lockfile:
+            data = lockfile.read().split(':')
+            self.log.debug(data)
+        self.procname, self.pid, self.port, self.client_password, self.protocol = data
 
         # headers
-        userpass = b64encode(bytes('{}:{}'.format(self.client_username, self.client_password), 'utf-8')).decode('ascii')
-        self.headers = {'Authorization': 'Basic {}'.format(userpass)}
+        userpass = b64encode(bytes(f'{self.client_username}:{self.client_password}', 'utf-8')).decode('ascii')
+        self.headers = {'Authorization': f'Basic {userpass}'}
         self.log.debug(self.headers['Authorization'])
 
         # connect
@@ -126,22 +108,14 @@ class Connection:
 
     def request(self, method: str, path: str, query: str = '', data: dict = None) -> requests.models.Response:
         """Handles HTTP requests to Riot Client or League Client server"""
-        if data is None:
-            data = {}
-        if not query:
-            url = "{}://{}:{}{}".format(self.protocol, self.host, self.port, path)
-        else:
-            url = "{}://{}:{}{}?{}".format(self.protocol, self.host, self.port, path, query)
+        url = f"{self.protocol}://{self.host}:{self.port}{path}{'?'+query if query else ''}"
+        if query:
+            url += '?' + query
 
-        if 'username' not in data:
-            self.log.debug("{} {} {}".format(method.upper(), url, data))
+        if data:
+            self.log.debug(f"{method.upper()} {url}")
+            r = getattr(self.session, method)(url, verify=False, headers=self.headers, json=data)
         else:
-            self.log.debug("{} {}".format(method.upper(), url))
-
-        fn = getattr(self.session, method)
-
-        if not data:
-            r = fn(url, verify=False, headers=self.headers)
-        else:
-            r = fn(url, verify=False, headers=self.headers, json=data)
+            self.log.debug(f"{method.upper()} {url} {data}")
+            r = getattr(self.session, method)(url, verify=False, headers=self.headers)
         return r

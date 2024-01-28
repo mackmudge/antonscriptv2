@@ -33,10 +33,10 @@ class LogsTab:
                     dpg.add_button(label="Cancel", width=75, callback=lambda: dpg.configure_item("DeleteFiles", show=False))
             dpg.add_spacer()
             with dpg.group(horizontal=True):
-                dpg.add_text(tag="LogUpdatedTime", default_value='Last Updated: {}'.format(datetime.now()))
+                dpg.add_text(tag="LogUpdatedTime", default_value=f"Last Updated: {datetime.now()}")
                 dpg.add_button(label='Update', width=54, callback=self.create_log_table)
                 dpg.add_button(label='Clear', width=54, callback=lambda: dpg.configure_item("DeleteFiles", show=True))
-                dpg.add_button(label='Show in File Explorer', callback=lambda: subprocess.Popen('explorer /select, {}'.format(Constants.LOG_DIR)))
+                dpg.add_button(label='Show in File Explorer', callback=lambda: subprocess.Popen(f"explorer /select, {Constants.LOG_DIR}"))
             dpg.add_spacer()
             dpg.add_separator()
             dpg.add_spacer()
@@ -46,7 +46,7 @@ class LogsTab:
         """Reads in logs from the logs folder and populates the logs tab"""
         if self.logs_group is not None:
             dpg.delete_item(self.logs_group)
-        dpg.set_value('LogUpdatedTime', 'Last Updated: {}'.format(datetime.now()))
+        dpg.set_value('LogUpdatedTime', f"Last Updated: {datetime.now()}")
         with dpg.group(parent=self.id) as self.logs_group:
             for filename in self.sorted_dir_creation_time(Constants.LOG_DIR):
                 f = os.path.join(Constants.LOG_DIR, filename)

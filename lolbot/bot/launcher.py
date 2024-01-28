@@ -95,11 +95,11 @@ class Launcher:
         body = {"clientId": "riot-client", 'trustLevels': ['always_trusted']}
         r = self.connection.request("post", "/rso-auth/v2/authorizations", data=body)
         if r.status_code != 200:
-            raise LauncherError("Failed Authorization Request. Response: {}".format(r.status_code))
+            raise LauncherError(f"Failed Authorization Request. Response: {r.status_code}")
         body = {"username": self.username, "password": self.password, "persistLogin": False}
         r = self.connection.request("put", '/rso-auth/v1/session/credentials', data=body)
         if r.status_code != 201:
-            raise LauncherError("Failed Authentication Request. Response: {}".format(r.status_code))
+            raise LauncherError(f"Failed Authentication Request. Response: {r.status_code}")
         elif r.json()['error'] == 'auth_failure':
             raise LauncherError("Invalid username or password")
 

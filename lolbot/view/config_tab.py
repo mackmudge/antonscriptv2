@@ -46,7 +46,7 @@ class ConfigTab:
                 with dpg.tooltip(dpg.last_item()):
                     dpg.add_text("If blank or if all champs are taken, the bot\nwill select a random free to play champion.\nAdd champs with a comma between each number.\nIt will autosave if valid.")
                 dpg.add_input_text(default_value=str(self.config.get_data('champs')).replace("[", "").replace("]", ""), width=334, callback=self._set_champs)
-                b = dpg.add_button(label="list", width=42, indent=526, callback=lambda: webbrowser.open('ddragon.leagueoflegends.com/cdn/{}/data/en_US/champion.json'.format(self.config.get_data('patch'))))
+                b = dpg.add_button(label="list", width=42, indent=526, callback=lambda: webbrowser.open(f"ddragon.leagueoflegends.com/cdn/{self.config.get_data('patch')}/data/en_US/champion.json"))
                 with dpg.tooltip(dpg.last_item()):
                     dpg.add_text("Open ddragon.leagueoflegends.com in webbrowser")
                 dpg.bind_item_theme(b, "__hyperlinkTheme")

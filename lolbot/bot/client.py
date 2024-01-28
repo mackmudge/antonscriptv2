@@ -130,7 +130,7 @@ class Client:
                 case 'EndOfGame':
                     self.end_of_game()
                 case _:
-                    raise ClientError("Unknown phase. {}".format(self.phase))
+                    raise ClientError(f"Unknown phase. {self.phase}")
 
     def get_phase(self) -> str:
         """Requests the League Client phase"""
@@ -139,13 +139,13 @@ class Client:
             if r.status_code == 200:
                 self.prev_phase = self.phase
                 self.phase = r.json()
-                self.log.debug("New Phase: {}, Previous Phase: {}".format(self.phase, self.prev_phase))
+                self.log.debug(f"New Phase: {self.phase}, Previous Phase: {self.prev_phase}")
                 if self.prev_phase == self.phase and self.phase != "Matchmaking":
                     self.phase_errors += 1
                     if self.phase_errors == Client.MAX_PHASE_ERRORS:
                         raise ClientError("Transition error. Phase will not change")
                     else:
-                        self.log.debug("Phase same as previous. Phase: {}, Previous Phase: {}, Errno {}".format(self.phase, self.prev_phase, self.phase_errors))
+                        self.log.debug(f"Phase same as previous. Phase: {self.phase}, Previous Phase: {self.prev_phase}, Errno {self.phase_errors}")
                 else:
                     self.phase_errors = 0
                 sleep(1.5)
@@ -155,13 +155,13 @@ class Client:
 
     def create_lobby(self, lobby_id: int) -> None:
         """Creates a lobby for given lobby ID"""
-        self.log.info("Creating lobby with lobby_id: {}".format(lobby_id))
+        self.log.info(f"Creating lobby with lobby_id: {lobby_id}")
         self.connection.request('post', '/lol-lobby/v2/lobby', data={'queueId': lobby_id})
         sleep(1.5)
 
     def start_matchmaking(self, lobby_id: int) -> None:
         """Starts matchmaking for a given lobby ID, will also wait out dodge timers"""
-        self.log.info("Starting queue for lobby_id: {}".format(lobby_id))
+        self.log.info(f"Starting queue for lobby_id: {lobby_id}")
         r = self.connection.request('get', '/lol-lobby/v2/lobby')
         if r.json()['gameConfig']['queueId'] != lobby_id:
             self.create_lobby(lobby_id)
@@ -173,7 +173,7 @@ class Client:
         r = self.connection.request('get', '/lol-matchmaking/v1/search')
         if r.status_code == 200 and len(r.json()['errors']) != 0:
             dodge_timer = int(r.json()['errors'][0]['penaltyTimeRemaining'])
-            self.log.info("Dodge Timer. Time Remaining: {}".format(utils.seconds_to_min_sec(dodge_timer)))
+            self.log.info(f"Dodge Timer. Time Remaining: {utils.seconds_to_min_sec(dodge_timer)}")
             sleep(dodge_timer)
 
         if r.status_code == 200:
@@ -227,19 +227,19 @@ class Client:
                 if not action['completed']:
                     # Select Champ or Lock in champ that has already been selected
                     if action['championId'] == 0:  # no champ selected, attempt to select a champ
-                        self.log.debug("Lobby State: {}. Time Left in Lobby: {}s. Action: Hovering champ".format(lobby_state, lobby_time_left))
+                        self.log.debug(f"Lobby State: {lobby_state}. Time Left in Lobby: {lobby_time_left}s. Action: Hovering champ")
                         if champ_index < len(self.champs):
                             champion_id = self.champs[champ_index]
                             champ_index += 1
                         else:
                             champion_id = f2p[f2p_index]
                             f2p_index += 1
-                        url = '/lol-champ-select/v1/session/actions/{}'.format(action['id'])
+                        url = f"/lol-champ-select/v1/session/actions/{action['id']}"
                         data = {'championId': champion_id}
                         self.connection.request('patch', url, data=data)
                     else:  # champ selected, lock in
-                        self.log.debug("Lobby State: {}. Time Left in Lobby: {}s. Action: Locking in champ".format(lobby_state, lobby_time_left))
-                        url = '/lol-champ-select/v1/session/actions/{}'.format(action['id'])
+                        self.log.debug(f"Lobby State: {lobby_state}. Time Left in Lobby: {lobby_time_left}s. Action: Locking in champ")
+                        url = f"/lol-champ-select/v1/session/actions/{action['id']}"
                         data = {'championId': action['championId']}
                         self.connection.request('post', url + '/complete', data=data)
 
@@ -252,7 +252,7 @@ class Client:
                                 pass
                             requested = True
                 else:
-                    self.log.debug("Lobby State: {}. Time Left in Lobby: {}s. Action: Waiting".format(lobby_state, lobby_time_left))
+                    self.log.debug(f"Lobby State: {lobby_state}. Time Left in Lobby: {lobby_time_left}s. Action: Waiting")
                 r = self.connection.request('get', '/lol-champ-select/v1/session')
                 if r.status_code != 200:
                     self.log.info('Lobby closed')
@@ -315,7 +315,7 @@ class Client:
         if r.status_code == 200:
             self.account.level = int(r.json()['lol']['level'])
             if self.account.level < self.max_level:
-                self.log.debug("Account Level: {}.".format(self.account.level))
+                self.log.debug(f"Account Level: {self.account.level}.")
                 return False
             else:
                 self.log.info("SUCCESS: Account Leveled")
@@ -334,7 +334,7 @@ class Client:
                 logged = True
             sleep(3)
             r = self.connection.request('get', '/patcher/v1/products/league_of_legends/state')
-            self.log.debug('Status Code: {}, Percent Patched: {}%'.format(r.status_code, r.json()['percentPatched']))
+            self.log.debug(f"Status Code: {r.status_code}, Percent Patched: {r.json()['percentPatched']}%")
             self.log.debug(r.json())
         self.log.info("Client is up to date")
 
@@ -346,7 +346,7 @@ class Client:
                 players = r.json()['eligiblePlayers']
                 index = random.randint(0, len(players)-1)
                 self.connection.request('post', '/lol-honor-v2/v1/honor-player', data={"summonerId": players[index]['summonerId']})
-                self.log.debug("Honor Success: Player {}. Champ: {}. Summoner: {}. ID: {}".format(index+1, players[index]['championName'], players[index]['summonerName'], players[index]['summonerId']))
+                self.log.debug(f"Honor Success: Player {index+1}. Champ: {players[index]['championName']}. Summoner: {players[index]['summonerName']}. ID: {players[index]['summonerId']}")
                 sleep(2)
                 return
             sleep(2)
@@ -358,21 +358,21 @@ class Client:
         chat_id = ''
         r = self.connection.request('get', '/lol-chat/v1/conversations')
         if r.status_code != 200:
-            self.log.warning("{} chat attempt failed. Could not reach endpoint".format(inspect.stack()[1][3]))
+            self.log.warning(f"{inspect.stack()[1][3]} chat attempt failed. Could not reach endpoint")
             return
         for convo in r.json():
             if convo['gameName'] != '' and convo['gameTag'] != '':
                 continue
             chat_id = convo['id']
         if chat_id == '':
-            self.log.warning('{} chat attempt failed. Could not send message. Chat ID is Null'.format(inspect.stack()[1][3]))
+            self.log.warning(f"{inspect.stack()[1][3]} chat attempt failed. Could not send message. Chat ID is Null")
             return
         data = {"body": msg}
-        r = self.connection.request('post', '/lol-chat/v1/conversations/{}/messages'.format(chat_id), data=data)
+        r = self.connection.request('post', f'/lol-chat/v1/conversations/{chat_id}/messages', data=data)
         if r.status_code != 200:
-            self.log.warning('Could not send message. HTTP STATUS: {} - {}, Caller: {}'.format(r.status_code, r.json(), inspect.stack()[1][3]))
+            self.log.warning(f'Could not send message. HTTP STATUS: {r.status_code} - {r.json()}, Caller: {inspect.stack()[1][3]}')
         else:
-            self.log.debug("Message success. Msg: {}. Caller: {}".format(msg, inspect.stack()[1][3]))
+            self.log.debug(f"Message success. Msg: {msg}. Caller: {inspect.stack()[1][3]}")
 
     def set_game_config(self) -> None:
         """Overwrites the League of Legends game config"""
