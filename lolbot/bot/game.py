@@ -68,6 +68,8 @@ class Game:
         self.buying_items = False
         self.ability_upgrades = ['ctrl+r', 'ctrl+q', 'ctrl+w', 'ctrl+e']
         self.bg_update_state = threading.Thread(target=self.update_state_loop, args=(3.0,), daemon=True)
+        self.consumables = -1
+        self.current_hp_ratio = 1
 
     def play_game(self) -> bool:
         """Plays a single game of League of Legends, takes actions based on game time"""
@@ -84,7 +86,7 @@ class Game:
                     case GameState.EARLY_GAME:
                         self.play(Game.MINI_MAP_CENTER_MID, Game.MINI_MAP_UNDER_TURRET, 15)
                     case GameState.LATE_GAME:
-                        self.play(Game.MINI_MAP_ENEMY_NEXUS, Game.MINI_MAP_CENTER_MID, 25)
+                        self.play(Game.MINI_MAP_ENEMY_NEXUS, Game.MINI_MAP_CENTER_MID, 20)
         except GameError as e:
             self.log.warning(e.__str__())
             utils.close_game()
@@ -167,6 +169,8 @@ class Game:
             attack_time = random.uniform(4, 6)
             utils.attack_move_click(attack_position, attack_time)
             utils.right_click(retreat_position, utils.LEAGUE_GAME_CLIENT_WINNAME, attack_time / 8)
+            if self.consumables != -1 and self.current_hp_ratio < 0.75:
+                utils.press(f"{self.consumables + 1}", utils.LEAGUE_GAME_CLIENT_WINNAME)
             self.log.debug(f"Need to buy items: {self.buying_items}. Has low hp: {self.low_hp}")
 
         # Ult and back if low hp or have gold
@@ -178,10 +182,11 @@ class Game:
 
     def dead_activities(self):
         """Activities while waiting for respawn"""
+        self.log.debug(f"Dead, waiting for {self.respawn_in} seconds")
         self.buy_item()
         self.upgrade_abilities()
         if self.respawn_in > 1:
-            sleep(self.respawn_in + 0.5)
+            sleep(self.respawn_in)
         self.respawn_in = 0
         self.in_lane = False
 
@@ -251,8 +256,16 @@ class Game:
                 self.is_dead = player['isDead']
                 self.respawn_in = player['respawnTimer']
                 self.buying_items = self.current_player['currentGold'] > 3000 and len(player['items']) < 7
-        self.low_hp = 0.01 < self.current_player['championStats']['currentHealth'] / \
-                    self.current_player['championStats']['maxHealth'] < 0.25
+
+                for item in player['items']:
+                    if item['consumable'] and item['slot'] < 6:
+                        self.consumables = item['slot']
+                        break
+                    elif item['slot'] == 6:
+                        self.consumables = -1
+
+        self.current_hp_ratio = self.current_player['championStats']['currentHealth'] / self.current_player['championStats']['maxHealth']
+        self.low_hp = 0.01 < self.current_hp_ratio < 0.25
 
         if not self.mid_turret_destroyed:
             for event in self.game_data["events"]["Events"]:
@@ -280,8 +293,4 @@ class Game:
 
     def update_state_loop(self, postpone_update=1.0):
         while True:
-            if self.respawn_in > postpone_update:
-                self.log.debug(f"Dead, waiting for {self.respawn_in} seconds")
-                self.update_state(self.respawn_in)
-            else:
-                self.update_state(postpone_update)
+            self.update_state(postpone_update)
