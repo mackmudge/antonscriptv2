@@ -143,8 +143,8 @@ class BotTab:
                     response = requests.get('https://127.0.0.1:2999/liveclientdata/allgamedata', timeout=10, verify=False)
                     if response.status_code == 200:
                         for player in response.json()['allPlayers']:
-                            if player['summonerName'] in response.json()['activePlayer']['summonerName']:
-                                champ = player['championName']
+                            if player['summonerName'] == response.json()['activePlayer']['summonerName'].split('#')[0]:
+                                champ = player['rawChampionName'].split('_')[-1]
                         game_time = utils.seconds_to_min_sec(response.json()['gameData']['gameTime'])
                 except:
                     try:

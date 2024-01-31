@@ -121,6 +121,7 @@ class Client:
                         self.game_errors += 1
                     else:
                         self.game_errors = 0
+                    del game
                 case 'Reconnect':
                     self.reconnect()
                 case 'WaitingForStats':
