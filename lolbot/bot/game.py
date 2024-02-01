@@ -67,16 +67,16 @@ class Game:
         self.low_hp = False
         self.buying_items = False
         self.ability_upgrades = ['ctrl+r', 'ctrl+q', 'ctrl+w', 'ctrl+e']
-        self.bg_update_state = threading.Thread(target=self.update_state_loop, args=(3.0,), daemon=True)
         self.consumables = -1
         self.current_hp_ratio = 1
+        self.hp_change = 0
 
     def play_game(self) -> bool:
         """Plays a single game of League of Legends, takes actions based on game time"""
         try:
             self.wait_for_game_window()
             self.wait_for_connection()
-            self.bg_update_state.start()
+            threading.Thread(target=self.update_state_loop, daemon=True).start()
             while True:
                 match self.game_state:
                     case GameState.LOADING_SCREEN:
@@ -84,9 +84,9 @@ class Game:
                     case GameState.PRE_MINIONS:
                         self.game_start()
                     case GameState.EARLY_GAME:
-                        self.play(Game.MINI_MAP_CENTER_MID, Game.MINI_MAP_UNDER_TURRET, 15)
+                        self.play(Game.MINI_MAP_CENTER_MID, Game.MINI_MAP_UNDER_TURRET, 20)
                     case GameState.LATE_GAME:
-                        self.play(Game.MINI_MAP_ENEMY_NEXUS, Game.MINI_MAP_CENTER_MID, 20)
+                        self.play(Game.MINI_MAP_ENEMY_NEXUS, Game.MINI_MAP_UNDER_TURRET, 30)
         except GameError as e:
             self.log.warning(e.__str__())
             utils.close_game()
@@ -152,9 +152,8 @@ class Game:
             self.dead_activities()
 
         if not self.in_lane:
-            utils.attack_move_click(attack_position)
             utils.press('d', utils.LEAGUE_GAME_CLIENT_WINNAME)  # ghost
-            sleep(time_to_lane)
+            utils.attack_move_click(attack_position, time_to_lane, self)
             self.in_lane = True
 
         # Main attack move loop. This sequence attacks and then de-aggros to prevent them from dying 50 times.
@@ -166,9 +165,11 @@ class Game:
             if attack_position == Game.MINI_MAP_CENTER_MID and self.game_state == GameState.LATE_GAME:
                 return
 
-            attack_time = random.uniform(4, 6)
-            utils.attack_move_click(attack_position, attack_time)
-            utils.right_click(retreat_position, utils.LEAGUE_GAME_CLIENT_WINNAME, attack_time / 8)
+            attack_time = random.uniform(4, 6) if self.current_hp_ratio < 0.6 or \
+                                                  self.current_player['championStats']['maxHealth'] < 1000 \
+                else random.uniform(6, 12)
+            utils.attack_move_click(attack_position, attack_time, self)
+            utils.right_click(retreat_position, utils.LEAGUE_GAME_CLIENT_WINNAME, min(attack_time / 8, 1))
             if self.consumables != -1 and self.current_hp_ratio < 0.75:
                 utils.press(f"{self.consumables + 1}", utils.LEAGUE_GAME_CLIENT_WINNAME)
             self.log.debug(f"Need to buy items: {self.buying_items}. Has low hp: {self.low_hp}")
@@ -176,9 +177,9 @@ class Game:
         # Ult and back if low hp or have gold
         if self.buying_items or self.low_hp:
             utils.press('f', utils.LEAGUE_GAME_CLIENT_WINNAME)
-            utils.attack_move_click(Game.ULT_DIRECTION)
-            utils.press('r', utils.LEAGUE_GAME_CLIENT_WINNAME, 4)
-            self.going_back()
+            # utils.attack_move_click(Game.ULT_DIRECTION)
+            # utils.press('r', utils.LEAGUE_GAME_CLIENT_WINNAME, 4)
+            self.back_to_base()
 
     def dead_activities(self):
         """Activities while waiting for respawn"""
@@ -190,7 +191,7 @@ class Game:
         self.respawn_in = 0
         self.in_lane = False
 
-    def going_back(self):
+    def back_to_base(self):
         self.log.debug(f"Going back with {self.current_player['currentGold']} gold and low hp: {self.low_hp}")
         utils.right_click(Game.MINI_MAP_UNDER_TURRET, utils.LEAGUE_GAME_CLIENT_WINNAME, 5)
         utils.press('b', utils.LEAGUE_GAME_CLIENT_WINNAME, 9)
@@ -222,7 +223,7 @@ class Game:
             utils.press(upgrade, utils.LEAGUE_GAME_CLIENT_WINNAME)
         self.ability_upgrades = ([self.ability_upgrades[0]] + [self.ability_upgrades[-1]] + self.ability_upgrades[1:-1])  # r is always first
 
-    def update_state(self, postpone_update=1.0) -> bool:
+    def update_state(self, postpone_update: int or float = 1.0) -> bool:
         """Gets game data from local game server and updates game state"""
         self.log.debug(f"Updating state. Caller: {inspect.stack()[1][3]}")
         sleep(postpone_update)
@@ -265,7 +266,7 @@ class Game:
                         self.consumables = -1
 
         self.current_hp_ratio = self.current_player['championStats']['currentHealth'] / self.current_player['championStats']['maxHealth']
-        self.low_hp = 0.01 < self.current_hp_ratio < 0.25
+        self.low_hp = 0.01 < self.current_hp_ratio < 0.3
 
         if not self.mid_turret_destroyed:
             for event in self.game_data["events"]["Events"]:
@@ -291,6 +292,8 @@ class Game:
         self.log.debug(f"State Updated. Game Time: {self.game_time}, Game State: {self.game_state}, IsDead: {self.is_dead}, Gold: {self.current_player['currentGold']}")
         return True
 
-    def update_state_loop(self, postpone_update=1.0):
+    def update_state_loop(self, postpone_update: int or float = 2.0):
         while True:
+            prev = self.current_hp_ratio
             self.update_state(postpone_update)
+            self.hp_change = prev - self.current_hp_ratio

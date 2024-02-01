@@ -13,6 +13,7 @@ import mouse
 import pyautogui
 from win32gui import FindWindow, GetWindowRect
 
+from lolbot.bot.game import Game
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ KILL_CRASH_HANDLER = 'TASKKILL /F /IM LeagueCrashHandler64.exe'
 KILL_LEAGUE_CLIENT = 'TASKKILL /F /IM LeagueClient.exe'
 KILL_LEAGUE = 'TASKKILL /F /IM "League of Legends.exe"'
 KILL_RIOT_CLIENT = 'TASKKILL /F /IM RiotClientUx.exe'
+Kill_RIOT_CLIENT_SERVICES = 'TASKKILL /F /IM RiotClientServices.exe'
 
 
 class WindowNotFound(Exception):
@@ -71,6 +73,7 @@ def close_all_processes() -> None:
     os.system(KILL_LEAGUE)
     os.system(KILL_LEAGUE_CLIENT)
     os.system(KILL_RIOT_CLIENT)
+    os.system(Kill_RIOT_CLIENT_SERVICES)
     sleep(5)
 
 
@@ -164,7 +167,7 @@ def right_click(ratio: tuple, expected_window: str = '', wait: int or float = 1)
     sleep(wait)
 
 
-def attack_move_click(ratio: tuple, wait: int or float = 1) -> None:
+def attack_move_click(ratio: tuple, wait: int or float = 1, obj: Game = None) -> None:
     """Attack move clicks in an open League of Legends game window"""
     if not exists(LEAGUE_GAME_CLIENT_WINNAME):
         log.debug("Cannot attack move when game is not running")
@@ -181,7 +184,19 @@ def attack_move_click(ratio: tuple, wait: int or float = 1) -> None:
     sleep(.1)
     mouse.click()
     keyboard.release('a')
-    sleep(wait)
+    if obj:
+        while wait >= 0.1:
+            if obj.is_dead:
+                return
+            sleep(.1)
+            wait -= .1
+            if obj.hp_change > 0.1 or obj.current_hp_ratio < 0.3:
+                log.debug(f"Interrupted attack, lost {obj.hp_change}%HP Skipped: {wait} seconds")
+                obj.hp_change = 0
+                return
+        sleep(wait)
+    else:
+        sleep(wait)
 
 
 def press(key: str, expected_window: str = '', wait: int or float = 1) -> None:
