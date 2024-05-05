@@ -23,13 +23,15 @@ LEAGUE_GAME_CLIENT_WINNAME = "League of Legends (TM) Client"
 
 # PROCESS NAMES
 LEAGUE_PROCESS_NAMES = ["LeagueClient.exe", "League of Legends.exe"]
-RIOT_CLIENT_PROCESS_NAMES = ["RiotClientUx.exe"]
+RIOT_CLIENT_PROCESS_NAMES = ["RiotClientUx.exe", "RiotClientServices.exe", "Riot Client.exe"]
 
 # COMMANDS
 KILL_CRASH_HANDLER = 'TASKKILL /F /IM LeagueCrashHandler64.exe'
 KILL_LEAGUE_CLIENT = 'TASKKILL /F /IM LeagueClient.exe'
 KILL_LEAGUE = 'TASKKILL /F /IM "League of Legends.exe"'
 KILL_RIOT_CLIENT = 'TASKKILL /F /IM RiotClientUx.exe'
+KILL_HANDLER_WMIC = 'wmic process where "name=\'LeagueCrashHandler64.exe\'" delete'
+KILL_LEAGUE_WMIC = 'wmic process where "name=\'LeagueClient.exe\'" delete'
 Kill_RIOT_CLIENT_SERVICES = 'TASKKILL /F /IM RiotClientServices.exe'
 
 
@@ -74,6 +76,8 @@ def close_all_processes() -> None:
     os.system(KILL_LEAGUE_CLIENT)
     os.system(KILL_RIOT_CLIENT)
     os.system(Kill_RIOT_CLIENT_SERVICES)
+    os.system(KILL_HANDLER_WMIC)
+    os.system(KILL_LEAGUE_WMIC)
     sleep(5)
 
 
