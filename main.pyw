@@ -1,7 +1,3 @@
-"""
-Where bot execution starts
-"""
-
 from lolbot.view.main_window import MainWindow
 
 
